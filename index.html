@@ -136,13 +136,59 @@ section{padding:clamp(80px,11vw,168px) var(--pad);position:relative}
 .hero-right{display:flex;gap:22px;align-items:flex-end;justify-content:flex-end;flex-wrap:wrap}
 @media (max-width:900px){.hero-right{justify-content:flex-start}}
 .portrait{
-  width:clamp(150px,17vw,210px);aspect-ratio:4/5;border-radius:4px;overflow:hidden;
-  position:relative;background:var(--bg-3);flex:none;
+  width:clamp(168px,19vw,236px);aspect-ratio:4/5;border-radius:4px;overflow:hidden;
+  position:relative;flex:none;isolation:isolate;
   border:1px solid var(--line);
+  box-shadow:0 24px 60px -28px rgba(0,0,0,.9);
+  /* light plate: the photo's flat white studio backdrop multiplies into this and vanishes */
+  background:
+    radial-gradient(125% 96% at 84% 6%,rgba(200,255,46,.34),transparent 58%),
+    linear-gradient(168deg,#f4f2ea 0%,#e4dfd0 52%,#cfc9b6 100%);
 }
-.portrait img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.06);transition:filter .6s var(--ease),transform .8s var(--ease)}
-.portrait:hover img{filter:grayscale(0) contrast(1);transform:scale(1.04)}
-.portrait .veil{position:absolute;inset:0;background:var(--accent);transform-origin:50% 100%}
+.portrait img{
+  width:100%;height:100%;object-fit:cover;position:relative;z-index:1;
+  mix-blend-mode:multiply;                              /* white → plate, subject → duotone */
+  filter:grayscale(1) contrast(1.22) brightness(1.04);  /* brightness clips the backdrop to pure white so it drops out cleanly */
+  transition:filter .7s var(--ease),transform .9s var(--ease);
+}
+.portrait:hover img{filter:grayscale(0) contrast(1.06) brightness(1.04) saturate(1.06);transform:scale(1.045)}
+
+/* fine halftone screen — newsprint texture over the duotone */
+.portrait .screen{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  mix-blend-mode:multiply;opacity:.24;color:#4a4636;
+  background-image:radial-gradient(currentColor .55px,transparent .6px);
+  background-size:3px 3px;
+}
+/* accent bloom — warms the plate toward lime on hover (multiply is commutative, so it can sit above) */
+.portrait .glow{
+  position:absolute;inset:0;z-index:3;pointer-events:none;
+  mix-blend-mode:multiply;opacity:0;transition:opacity .7s var(--ease);
+  background:radial-gradient(110% 88% at 78% 10%,rgba(200,255,46,.72),rgba(138,123,255,.28) 64%,transparent 82%);
+}
+.portrait:hover .glow{opacity:1}
+
+/* crop marks — dark ink, since lime would wash out on the light plate */
+.portrait::before,.portrait::after{
+  content:"";position:absolute;z-index:4;width:14px;height:14px;pointer-events:none;
+  border:1px solid rgba(16,15,10,.5);
+}
+.portrait::before{top:7px;left:7px;border-right:0;border-bottom:0}
+.portrait::after{bottom:26px;right:7px;border-left:0;border-top:0} /* clears the caption strip */
+
+/* figure caption */
+.portrait .cap{
+  position:absolute;z-index:4;left:0;right:0;bottom:0;
+  display:flex;justify-content:space-between;gap:8px;
+  padding:18px 10px 9px;
+  font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:#100f0a;
+  background:linear-gradient(to top,rgba(244,242,234,.88),rgba(244,242,234,0));
+}
+.portrait .cap i{font-style:normal}
+/* scaleY(0) default: GSAP raises it to 1 before the intro wipe, but the
+   reduced-motion / no-GSAP path returns early — without this the veil
+   would sit at full height and hide the portrait behind solid accent. */
+.portrait .veil{position:absolute;inset:0;z-index:6;background:var(--accent);transform:scaleY(0);transform-origin:50% 100%}
 .role-list{display:flex;flex-direction:column;gap:6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
 .role-list span{display:flex;align-items:center;gap:9px}
 .role-list span::before{content:"";width:5px;height:5px;background:var(--accent);border-radius:50%;flex:none}
@@ -462,7 +508,6 @@ footer a:hover{color:var(--accent)}
 <section class="hero" id="home">
   <div class="hero-top">
     <span data-fade>Dhaka, Bangladesh — 23.75°N / 90.42°E</span>
-    <span data-fade>Available for AI platform work</span>
     <span data-fade>Est. 2018 — <span id="year">2026</span></span>
   </div>
 
@@ -494,6 +539,9 @@ footer a:hover{color:var(--accent)}
       </div>
       <div class="portrait" data-portrait>
         <img src="assets/ismail.png" alt="Portrait of Ismail Hossain Polas" />
+        <span class="screen" aria-hidden="true"></span>
+        <span class="glow" aria-hidden="true"></span>
+        <span class="cap mono" aria-hidden="true"><i>Fig. 01</i><i>I.H.P.</i></span>
         <span class="veil"></span>
       </div>
     </div>
